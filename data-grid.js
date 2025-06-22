@@ -84,12 +84,12 @@ export class DataGrid {
     rows.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="width: 120px; padding: 8px;">${this._renderActions(row)}</td>
-        <td style="width: 250px; padding: 8px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.name}">${row.name}</td>
-        <td style="width: 80px; padding: 8px;"><span class="badge bg-secondary">${row.type}</span></td>
-        <td style="width: 150px; padding: 8px; font-size: 0.9em;">${this._formatDate(row.modified)}</td>
-        <td style="width: 130px; padding: 8px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.modifiedBy}">${row.modifiedBy}</td>
-        <td style="width: 100px; padding: 8px; font-size: 0.9em;">${row.fileSize}</td>
+        <td style="width: 120px;">${this._renderActions(row)}</td>
+        <td style="width: 240px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.name}">${row.name}</td>
+        <td style="width: 80px;"><span class="badge bg-secondary">${row.type}</span></td>
+        <td style="width: 150px; font-size: 0.9em;">${this._formatDate(row.modified)}</td>
+        <td style="width: 130px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.modifiedBy}">${row.modifiedBy}</td>
+        <td style="width: 100px; font-size: 0.9em;">${row.fileSize}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -97,17 +97,17 @@ export class DataGrid {
 
   _renderActions(row) {
     return `
-      <div style="display: flex; gap: 4px;">
-        <button class="btn btn-outline-primary btn-sm" title="Download" style="padding: 2px 6px; font-size: 0.8em;">
+      <div style="display: flex; gap: 2px;">
+        <button class="btn" title="Download" style="padding: 2px 6px; font-size: 0.8em;">
           <i class="fas fa-download"></i>
         </button>
-        <button class="btn btn-outline-secondary btn-sm" title="Edit" style="padding: 2px 6px; font-size: 0.8em;">
+        <button class="btn" title="Edit" style="padding: 2px 6px; font-size: 0.8em;">
           <i class="fas fa-edit"></i>
         </button>
-        <button class="btn btn-outline-info btn-sm" title="Copy" style="padding: 2px 6px; font-size: 0.8em;">
+        <button class="btn" title="Copy" style="padding: 2px 6px; font-size: 0.8em;">
           <i class="fas fa-copy"></i>
         </button>
-        <button class="btn btn-outline-success btn-sm" title="Share" style="padding: 2px 6px; font-size: 0.8em;">
+        <button class="btn" title="Share" style="padding: 2px 6px; font-size: 0.8em;">
           <i class="fas fa-share"></i>
         </button>
       </div>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Universal Data Grid</title>
+    <title>Data Grid Component</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -12,70 +12,63 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
-    <style>
-      body {
-        padding: 2rem;
-      }
-      .data-grid-container {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      table th,
-      table td {
-        vertical-align: middle;
-      }
-    </style>
   </head>
+
   <body>
     <div class="data-grid-container" id="gridContainer"></div>
 
     <script type="module">
       import { DataGrid } from "./data-grid.js";
-      
-      // Mock fetch to intercept API calls and return sample data
+
+      // Store original fetch before overriding
       const originalFetch = window.fetch;
-      window.fetch = async function(url, options) {
-        if (url.includes('/api/files')) {
-          // Load sample data
-          const response = await originalFetch('./sample-data.json');
-          const sampleData = await response.json();
-          
-          // Parse query parameters for pagination
-          const urlObj = new URL(url, window.location.origin);
-          const offset = parseInt(urlObj.searchParams.get('offset')) || 0;
-          const limit = parseInt(urlObj.searchParams.get('limit')) || 20;
-          
-          // Slice data for pagination
-          const slicedData = sampleData.data.slice(offset, offset + limit);
-          
-          // Return mock API response
-          return new Response(JSON.stringify({
-            data: slicedData,
-            total: sampleData.data.length,
-            offset: offset,
-            limit: limit
-          }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
+
+      // Override fetch to mock API calls
+      window.fetch = async function (url) {
+        if (!url.includes("/api/files")) return originalFetch(url);
+
+        try {
+          const response = await originalFetch("./sample-data.json");
+          const jsonData = await response.json();
+
+          // Parse URL parameters for pagination
+          const params = new URL(url, location.origin).searchParams;
+          const offset = parseInt(params.get("offset")) || 0;
+          const limit = parseInt(params.get("limit")) || 20;
+
+          // Return paginated response
+          return new Response(
+            JSON.stringify({
+              data: jsonData.data?.slice(offset, offset + limit) || [],
+              total: jsonData.data?.length || 0,
+              offset,
+              limit,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        } catch (error) {
+          console.error("Error loading mock data:", error);
+          return new Response(JSON.stringify({ data: [], total: 0 }), {
+            status: 500,
           });
         }
-        return originalFetch(url, options);
       };
-      
-      const columns = [
-        { key: "actions", label: "Actions" },
-        { key: "name", label: "Name" },
-        { key: "type", label: "Type" },
-        { key: "modified", label: "Modified" },
-        { key: "modifiedBy", label: "Modified By" },
-        { key: "fileSize", label: "File Size" },
-      ];
-      
-      const apiEndpoint = "/api/files";
+
+      // Initialize data grid
       new DataGrid({
         container: document.getElementById("gridContainer"),
-        apiEndpoint,
-        columns,
+        apiEndpoint: "/api/files",
+        columns: [
+          { key: "actions", label: "Actions" },
+          { key: "name", label: "Name" },
+          { key: "type", label: "Type" },
+          { key: "modified", label: "Modified" },
+          { key: "modifiedBy", label: "Modified By" },
+          { key: "fileSize", label: "File Size" },
+        ],
       });
     </script>
   </body>
