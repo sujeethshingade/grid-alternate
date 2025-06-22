@@ -21,45 +21,38 @@ export class DataGrid {
     const bufferRows = 5;
     const visibleRows = Math.floor(viewportHeight / estimatedRowHeight);
     return Math.max(10, visibleRows + bufferRows);
-  }
-
-  _init() {
+  }  _init() {
     // Create title
     this.titleDiv = document.createElement('h4');
     this.titleDiv.textContent = 'Sample Data';
-    this.titleDiv.className = 'mb-2';
+    this.titleDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 0; background: white; z-index: 20; padding: 10px 0; margin: 0;';
     this.container.appendChild(this.titleDiv);
     
     // Row count
     this.rowCountDiv = document.createElement('div');
-    this.rowCountDiv.className = 'text-muted small mb-3';
+    this.rowCountDiv.className = 'text-muted small';
     this.rowCountDiv.textContent = 'Loading...';
-    this.container.appendChild(this.rowCountDiv);
-
-    // Create table with proper sticky header
+    this.rowCountDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 44px; background: white; z-index: 19; padding: 5px 0; margin: 0; margin-bottom: 5px;';
+    this.container.appendChild(this.rowCountDiv);// Create table with proper sticky header
     this.table = document.createElement('table');
     this.table.className = 'table table-hover table-sm';
-    this.table.style.cssText = 'position: relative;';
+    this.table.style.cssText = 'position: relative; width: 100%;';
     this.table.innerHTML = this._renderHeader();
-    this.container.appendChild(this.table);
-
-    // Initial load
+    this.container.appendChild(this.table);    // Initial load
     this._loadRows();
 
     // Scroll event for lazy loading
     window.addEventListener('scroll', () => this._onScroll());
-  }
-
-  _renderHeader() {
+  }  _renderHeader() {
     return `
       <thead>
-        <tr style="position: sticky; top: 0; background: #f8f9fa; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
-          <th style="width: 120px; padding: 12px 8px;">Actions</th>
-          <th style="width: 250px; padding: 12px 8px;">Name</th>
-          <th style="width: 80px; padding: 12px 8px;">Type</th>
-          <th style="width: 150px; padding: 12px 8px;">Modified</th>
-          <th style="width: 130px; padding: 12px 8px;">Modified By</th>
-          <th style="width: 100px; padding: 12px 8px;">File Size</th>
+        <tr style="position: -webkit-sticky; position: sticky; top: 70px; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
+          <th>Actions</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Modified</th>
+          <th>Modified By</th>
+          <th>File Size</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -134,9 +127,7 @@ export class DataGrid {
 
   _updateRowCount() {
     this.rowCountDiv.textContent = `Showing ${this.data.length} of ${this.total} rows`;
-  }
-
-  _onScroll() {
+  }  _onScroll() {
     if (this.isLoading || this.data.length >= this.total) return;
     
     const now = Date.now();
