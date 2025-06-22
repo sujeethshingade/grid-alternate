@@ -1,10 +1,10 @@
 export class DataGrid {
-  constructor({ container, apiEndpoint, columns, pageSize }) {
+  constructor({ container, apiEndpoint, columns}) {
     this.container = container;
     this.apiEndpoint = apiEndpoint;
     this.columns = columns;
     this.offset = 0;
-    this.limit = pageSize || this._calculateOptimalPageSize();
+    this.limit = this._calculateOptimalPageSize();
     this.total = 0;
     this.isLoading = false;
     this.data = [];
@@ -21,18 +21,20 @@ export class DataGrid {
     const bufferRows = 5;
     const visibleRows = Math.floor(viewportHeight / estimatedRowHeight);
     return Math.max(10, visibleRows + bufferRows);
-  }  _init() {
+  }  
+  
+  _init() {
     // Create title
     this.titleDiv = document.createElement('h4');
-    this.titleDiv.textContent = 'Sample Data';
-    this.titleDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 0; background: white; z-index: 20; padding: 10px 0; margin: 0;';
+    this.titleDiv.textContent = 'Sample Data Grid';
+    this.titleDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 0; background: white; z-index: 20; padding: 20px 50px; margin: 0;';
     this.container.appendChild(this.titleDiv);
     
     // Row count
     this.rowCountDiv = document.createElement('div');
     this.rowCountDiv.className = 'text-muted small';
     this.rowCountDiv.textContent = 'Loading...';
-    this.rowCountDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 44px; background: white; z-index: 19; padding: 5px 0; margin: 0; margin-bottom: 5px;';
+    this.rowCountDiv.style.cssText = 'position: -webkit-sticky; position: sticky; top: 69px; background: white; z-index: 19; padding: 0 50px; margin: 0; margin-bottom: 10px;';
     this.container.appendChild(this.rowCountDiv);// Create table with proper sticky header
     this.table = document.createElement('table');
     this.table.className = 'table table-hover table-sm';
@@ -46,13 +48,13 @@ export class DataGrid {
   }  _renderHeader() {
     return `
       <thead>
-        <tr style="position: -webkit-sticky; position: sticky; top: 70px; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
-          <th>Actions</th>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Modified</th>
-          <th>Modified By</th>
-          <th>File Size</th>
+        <tr style="position: -webkit-sticky; position: sticky; top: 90px; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
+          <th style="width: 80px; padding: 8px 50px;">Actions</th>
+          <th style="width: 240px; padding: 8px 12px;">Name</th>
+          <th style="width: 80px; padding: 8px 12px;">Type</th>
+          <th style="width: 150px; padding: 8px 12px;">Modified</th>
+          <th style="width: 130px; padding: 8px 12px;">Modified By</th>
+          <th style="width: 100px; padding: 8px 12px;">File Size</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -84,12 +86,12 @@ export class DataGrid {
     rows.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="width: 120px;">${this._renderActions(row)}</td>
-        <td style="width: 240px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.name}">${row.name}</td>
-        <td style="width: 80px;"><span class="badge bg-secondary">${row.type}</span></td>
-        <td style="width: 150px; font-size: 0.9em;">${this._formatDate(row.modified)}</td>
-        <td style="width: 130px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.modifiedBy}">${row.modifiedBy}</td>
-        <td style="width: 100px; font-size: 0.9em;">${row.fileSize}</td>
+        <td style="width: 80px; padding: 8px 50px;">${this._renderActions(row)}</td>
+        <td style="width: 240px; padding: 8px 12px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.name}">${row.name}</td>
+        <td style="width: 80px; padding: 8px 12px;"><span class="badge bg-secondary">${row.type}</span></td>
+        <td style="width: 150px; padding: 8px 12px; font-size: 0.9em;">${this._formatDate(row.modified)}</td>
+        <td style="width: 130px; padding: 8px 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${row.modifiedBy}">${row.modifiedBy}</td>
+        <td style="width: 100px; padding: 8px 12px; font-size: 0.9em;">${row.fileSize}</td>
       `;
       tbody.appendChild(tr);
     });
