@@ -24,14 +24,11 @@ export async function GET(request: NextRequest) {
 
     const db = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
-
-    // Get total count
     const total = await collection.countDocuments({});
 
     // Get paginated results
     const files = await collection
       .find({})
-      .sort({ modified: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
