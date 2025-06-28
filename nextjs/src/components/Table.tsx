@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useCallback, useRef, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -9,275 +9,183 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Table components
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+    <div className="relative w-full overflow-x-auto">
+      <table className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   )
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return (
-    <thead
-      data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
-      {...props}
-    />
-  )
+  return <thead className={cn("[&_tr]:border-b", className)} {...props} />
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
-  return (
-    <tbody
-      data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
-      {...props}
-    />
-  )
-}
-
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-  return (
-    <tfoot
-      data-slot="table-footer"
-      className={cn(
-        "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
-        className
-      )}
-      {...props}
-    />
-  )
+  return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
-    <tr
-      data-slot="table-row"
-      className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
-        className
-      )}
-      {...props}
-    />
+    <tr className={cn("hover:bg-muted/50 border-b transition-colors", className)} {...props} />
   )
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
-    <th
-      data-slot="table-head"
-      className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      )}
-      {...props}
-    />
+    <th className={cn("h-10 px-2 text-left align-middle font-medium", className)} {...props} />
   )
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return (
-    <td
-      data-slot="table-cell"
-      className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      )}
-      {...props}
-    />
-  )
+  return <td className={cn("p-2 align-middle", className)} {...props} />
 }
 
-function TableCaption({
-  className,
-  ...props
-}: React.ComponentProps<"caption">) {
-  return (
-    <caption
-      data-slot="table-caption"
-      className={cn("text-muted-foreground mt-4 text-sm", className)}
-      {...props}
-    />
-  )
+// Column definition interface
+export interface ColumnDef<T> {
+  key: string;
+  label: string;
+  render?: (value: any, item: T) => ReactNode;
+  className?: string;
 }
 
-// Simple DataTable with lazy loading
-export interface SimpleDataTableProps<T> {
+// Main DataTable interface
+export interface DataTableProps<T> {
   apiEndpoint: string;
-  renderHeader: () => ReactNode;
-  renderRow: (item: T, index: number) => ReactNode;
+  columns: ColumnDef<T>[];
   getItemId: (item: T) => string | number;
   className?: string;
   transformResponse?: (response: any) => { data: T[], total: number };
+  pageSize?: number;
 }
 
+// Optimized DataTable with infinite scroll
 function DataTable<T>({
   apiEndpoint,
-  renderHeader,
-  renderRow,
+  columns,
   getItemId,
   className = '',
-  transformResponse
-}: SimpleDataTableProps<T>) {
+  transformResponse,
+  pageSize = 20
+}: DataTableProps<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+  const [skip, setSkip] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
 
-  // Simple fetch function - removed from useCallback to avoid dependency issues
-  const loadData = async (skip: number = 0, limit: number = 20) => {
-    if (loading) return;
+  const loadData = async (currentSkip: number) => {
+    if (loadingRef.current) return;
 
-    console.log(`Loading data: skip=${skip}, limit=${limit}`);
+    loadingRef.current = true;
     setLoading(true);
+
     try {
-      const response = await fetch(`${apiEndpoint}?skip=${skip}&limit=${limit}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await fetch(`${apiEndpoint}?skip=${currentSkip}&limit=${pageSize}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
       const rawData = await response.json();
-      const data = transformResponse ? transformResponse(rawData) : rawData;
+      const { data, total } = transformResponse ? transformResponse(rawData) : rawData;
 
-      console.log('Received data:', data);
-
-      if (skip === 0) {
-        setItems(data.data || []);
-        setOffset(0);
+      if (currentSkip === 0) {
+        setItems(data || []);
       } else {
-        setItems(prev => [...prev, ...(data.data || [])]);
+        setItems(prev => [...prev, ...(data || [])]);
       }
 
-      // Check if we have more data
-      const receivedCount = (data.data || []).length;
-      const newOffset = skip + receivedCount;
-      setHasMore(receivedCount === limit && receivedCount > 0);
-      setOffset(newOffset);
+      const newSkip = currentSkip + (data?.length || 0);
+      setSkip(newSkip);
+      setHasMore((data?.length || 0) === pageSize);
 
-      console.log(`HasMore: ${receivedCount === limit}, New Offset: ${newOffset}`);
     } catch (error) {
       console.error('Error loading data:', error);
       setHasMore(false);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
-  // Load initial data only when apiEndpoint changes
+  // Initial load
   useEffect(() => {
-    console.log('Initial load for endpoint:', apiEndpoint);
     setItems([]);
-    setOffset(0);
+    setSkip(0);
     setHasMore(true);
-    loadData(0, 20);
+    loadData(0);
   }, [apiEndpoint]);
 
-  // Simple scroll-based loading - removed dependencies that cause issues
+  // Infinite scroll
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const nearBottom = scrollTop + clientHeight >= scrollHeight - 50;
-
-      console.log(`Scroll check - Near bottom: ${nearBottom}, HasMore: ${hasMore}, Loading: ${loading}, Offset: ${offset}`);
-
-      if (nearBottom && hasMore && !loading) {
-        console.log(`Triggering load with offset: ${offset}`);
-        loadData(offset, 20);
+      if (scrollTop + clientHeight >= scrollHeight - 100 && hasMore && !loading) {
+        loadData(skip);
       }
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  });
-
-  // Also add a manual trigger for testing
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      loadData(offset, 20);
-    }
-  };
+  }, [skip, hasMore, loading]);
 
   return (
-    <div ref={containerRef} className={cn("relative h-full overflow-auto", className)}>
-      <div className="sticky top-0 z-10 bg-gray-50 p-3 text-sm border-b flex justify-between items-center">
-        <span>
-          {items.length} items {loading && '(loading...)'} {hasMore ? '(more available)' : '(no more)'}
-        </span>
-        {hasMore && !loading && (
-          <button
-            onClick={loadMore}
-            className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-          >
-            Load More
-          </button>
-        )}
-      </div>
-
+    <div ref={containerRef} className={cn("h-full overflow-auto", className)}>
       <Table>
-        <TableHeader className="sticky z-10 bg-slate-50" style={{ top: '52px' }}>
-          {renderHeader()}
+        <TableHeader className="sticky top-0 bg-white z-10">
+          <TableRow>
+            {columns.map((column) => (
+              <TableHead key={column.key} className={column.className}>
+                {column.label}
+              </TableHead>
+            ))}
+          </TableRow>
         </TableHeader>
 
         <TableBody>
-          {items.map((item, index) => (
+          {items.map((item) => (
             <TableRow key={getItemId(item)}>
-              {renderRow(item, index)}
+              {columns.map((column) => (
+                <TableCell key={column.key} className={column.className}>
+                  {column.render
+                    ? column.render((item as any)[column.key], item)
+                    : (item as any)[column.key] || '-'
+                  }
+                </TableCell>
+              ))}
             </TableRow>
           ))}
 
           {loading && (
             <TableRow>
-              <TableCell colSpan={100} className="text-center py-4 text-gray-500">
-                Loading more items...
+              <TableCell colSpan={columns.length} className="text-center py-4">
+                Loading...
               </TableCell>
             </TableRow>
           )}
 
           {!hasMore && items.length > 0 && (
             <TableRow>
-              <TableCell colSpan={100} className="text-center py-4 text-gray-400">
-                No more items to load
+              <TableCell colSpan={columns.length} className="text-center py-4 text-gray-500">
+                No more data
               </TableCell>
             </TableRow>
           )}
 
           {items.length === 0 && !loading && (
             <TableRow>
-              <TableCell colSpan={100} className="text-center py-8 text-gray-500">
-                No data available
+              <TableCell colSpan={columns.length} className="text-center py-8 text-gray-500">
+                No data found
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
-
-      {/* Scroll trigger area */}
-      <div className="h-20 flex items-center justify-center text-gray-400 text-sm">
-        {hasMore && !loading && 'Scroll down for more...'}
-      </div>
     </div>
   );
 }
 
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-  DataTable
-}
+export { DataTable, Table, TableHeader, TableBody, TableRow, TableHead, TableCell }

@@ -18,9 +18,8 @@ async function connectToDatabase() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
+    const skip = parseInt(searchParams.get('skip') || '0');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const skip = (page - 1) * limit;
 
     const db = await connectToDatabase();
     const collection = db.collection(COLLECTION_NAME);
@@ -36,8 +35,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       files,
       totalRecords: total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit)
+      skip,
+      limit
     });
 
   } catch (error) {
