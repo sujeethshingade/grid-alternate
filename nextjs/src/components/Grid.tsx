@@ -32,7 +32,7 @@ interface FileTableProps {
   className?: string;
 }
 
-export function AppTable({ className }: FileTableProps) {
+export function Grid({ className }: FileTableProps) {
   const [files, setFiles] = useState<FileDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
