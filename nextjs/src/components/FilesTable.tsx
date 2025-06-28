@@ -124,10 +124,6 @@ const FilesTable: React.FC = () => {
                 columns={columns}
                 fetchData={fetchFilesData}
                 rowKey="_id"
-                initialLimit={20}
-                loadMoreThreshold={0.8}
-                emptyMessage="No files found"
-                loadingMessage="Loading files..."
             />
         </div>
     );

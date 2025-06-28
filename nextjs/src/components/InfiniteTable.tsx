@@ -30,7 +30,7 @@ export function InfiniteTable<T = any>({
   fetchData,
   rowKey,
   initialLimit = 20,
-  loadMoreThreshold = 0.8,
+  loadMoreThreshold = 0.6,
   emptyMessage = 'No files found',
   loadingMessage = 'Loading files...'
 }: InfiniteTableProps<T>) {
