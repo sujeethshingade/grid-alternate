@@ -20,7 +20,7 @@ const FilesTable: React.FC = () => {
             header: 'Action',
             width: 60,
             render: () => (
-                <div className="flex justify-center items-center gap-2">
+                <div className="flex items-center gap-2">
                     <button title="Star" className="text-gray-500"><FaStar size={12} /></button>
                     <button title="Share" className="text-gray-500"><FaShareAlt size={12} /></button>
                     <button title="Download" className="text-gray-500"><FaDownload size={12} /></button>
@@ -31,7 +31,7 @@ const FilesTable: React.FC = () => {
         {
             key: 'name',
             header: 'Name',
-            minWidth: 200,
+            width: 200,
             render: (value) => (
                 <span className="text-gray-700 font-medium">{value}</span>
             )
@@ -39,7 +39,7 @@ const FilesTable: React.FC = () => {
         {
             key: 'type',
             header: 'Type',
-            width: 100,
+            width: 80,
             render: (value) => (
                 <span className="text-gray-700">{value}</span>
             )
@@ -72,7 +72,7 @@ const FilesTable: React.FC = () => {
         {
             key: 'fileSize',
             header: 'File Size',
-            width: 100,
+            width: 80,
             render: (value) => (
                 <span className="text-gray-700">{value}</span>
 
@@ -118,7 +118,7 @@ const FilesTable: React.FC = () => {
     };
 
     return (
-        <div className="h-screen max-h-[800px] w-full font-sans">
+        <div className="h-screen w-full">
             <InfiniteTable<FileData>
                 tableName="All Files"
                 columns={columns}
@@ -126,7 +126,6 @@ const FilesTable: React.FC = () => {
                 rowKey="_id"
                 initialLimit={20}
                 loadMoreThreshold={0.8}
-                className="files-table"
                 emptyMessage="No files found"
                 loadingMessage="Loading files..."
             />
