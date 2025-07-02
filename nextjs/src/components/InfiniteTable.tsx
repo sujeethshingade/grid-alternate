@@ -40,6 +40,7 @@ export function InfiniteTable<T = any>({
   const [hasMore, setHasMore] = useState(true);
   const [totalRecords, setTotalRecords] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
@@ -88,6 +89,27 @@ export function InfiniteTable<T = any>({
     }
   }, [loading, hasMore, loadMoreThreshold, data.length, loadData]);
 
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      const allKeys = data.map((row, index) => getRowKey(row, index));
+      setSelectedRows(new Set(allKeys));
+    } else {
+      setSelectedRows(new Set());
+    }
+  }, [data, getRowKey]);
+
+  const handleRowSelect = useCallback((rowKey: string, checked: boolean) => {
+    setSelectedRows(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(rowKey);
+      } else {
+        newSet.delete(rowKey);
+      }
+      return newSet;
+    });
+  }, []);
+
   useEffect(() => {
     loadData(0, true);
   }, []);
@@ -110,6 +132,9 @@ export function InfiniteTable<T = any>({
     return value?.toString() || '';
   };
 
+  const isAllSelected = data.length > 0 && selectedRows.size === data.length;
+  const isIndeterminate = selectedRows.size > 0 && selectedRows.size < data.length;
+
   if (initialLoading) {
     return (
       <div className={"flex flex-col h-full bg-white border border-gray-200 overflow-hidden"}>
@@ -131,6 +156,11 @@ export function InfiniteTable<T = any>({
         <h3 className="m-0 text-base font-semibold text-gray-900">{tableName}</h3>
         <div className="text-xs text-gray-700 font-normal">
           Showing {data.length} of {totalRecords} rows
+          {selectedRows.size > 0 && (
+            <span className="ml-2 text-blue-600 font-medium">
+              • {selectedRows.size} selected
+            </span>
+          )}
         </div>
       </div>
 
@@ -138,6 +168,17 @@ export function InfiniteTable<T = any>({
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 z-5 bg-gray-100">
             <tr>
+              <th className="px-4 py-2 text-left font-semibold text-gray-900 border-b border-gray-200 bg-gray-100 w-10">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isIndeterminate;
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="rounded border-gray-300 focus:ring-blue-500"
+                />
+              </th>
               {columns.map((column) => (
                 <th
                   key={column.key}
@@ -154,29 +195,42 @@ export function InfiniteTable<T = any>({
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="text-center py-10 text-gray-700 italic">
+                <td colSpan={columns.length + 1} className="text-center py-10 text-gray-700 italic">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
-              data.map((row, index) => (
-                <tr
-                  key={getRowKey(row, index)}
-                  className={"border-b border-gray-200 hover:bg-gray-50"}
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className="px-4 py-2 align-top whitespace-nowrap overflow-hidden text-ellipsis"
-                      style={{
-                        width: column.width
-                      }}
-                    >
-                      {renderCell(column, row, index)}
+              data.map((row, index) => {
+                const key = getRowKey(row, index);
+                const isSelected = selectedRows.has(key);
+                return (
+                  <tr
+                    key={key}
+                    className={`border-b border-gray-200 hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''
+                      }`}
+                  >
+                    <td className="px-4 py-2 align-top w-10">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => handleRowSelect(key, e.target.checked)}
+                        className="rounded border-gray-300 focus:ring-blue-500"
+                      />
                     </td>
-                  ))}
-                </tr>
-              ))
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className="px-4 py-2 align-top whitespace-nowrap overflow-hidden text-ellipsis"
+                        style={{
+                          width: column.width
+                        }}
+                      >
+                        {renderCell(column, row, index)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
