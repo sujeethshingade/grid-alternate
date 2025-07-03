@@ -29,10 +29,8 @@ It features an infinite-scroll (lazy loading) table UI that fetches file data fr
 
 ```bash
 git clone https://github.com/sujeethshingade/grid-alternate.git
-cd grid-alternate/nextjs
-
+cd grid-alternate
 npm install
-
 npm run dev
 ```
 

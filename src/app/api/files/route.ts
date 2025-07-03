@@ -8,9 +8,14 @@ const COLLECTION_NAME = 'files';
 let client: MongoClient | null = null;
 
 async function connectToDatabase() {
+  if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI is not defined in environment variables');
+  }
+
   if (!client) {
     client = new MongoClient(MONGODB_URI);
     await client.connect();
+    console.log('Connected to MongoDB Atlas');
   }
   return client.db(DB_NAME);
 }
